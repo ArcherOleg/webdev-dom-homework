@@ -24,6 +24,7 @@
         ></textarea>
         <div class="add-form-row">
           <button id="add-button" class="add-form-button">Написать</button>
+          <buttton id="delete-button" class="add-form-delete">Удалить комментарий</buttton>
         </div>
       </div>
     </div>
@@ -41,6 +42,7 @@
     const listElement = document.getElementById("list");
     const nameInputElement = document.getElementById("name-input");  
     const textInputElement = document.getElementById("text-input");
+    const deleteButtonElement = document.getElementById("delete-button");
 
     const commentsOfArr = [
       {
@@ -144,12 +146,25 @@
         like: 0,
         isactivelike: false,
       })
-  renderComments();
+      renderComments();
 
         nameInputElement.value = "";
         textInputElement.value = "";
         buttonElement.disabled = true;
     })
+
+    deleteButtonElement.addEventListener("click", () => { 
+      const lastCommentIndex = listElement.innerHTML.lastIndexOf( '<li class="comment">' ); 
+        if (lastCommentIndex !== -1) { 
+          listElement.innerHTML = listElement.innerHTML.substring( 0, lastCommentIndex ); 
+        } 
+    });
+    
+    document.addEventListener("keyup", (event) => {
+      if (event.key === "Enter") { 
+         buttonElement.click(); 
+        } 
+        });
 
     console.log("It works!");
   </script>
