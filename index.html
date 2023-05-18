@@ -64,18 +64,37 @@
     const likes = () => {
     const likeButtons = document.querySelectorAll('.like-button');
     for (const likeButton of likeButtons) {
-          likeButton.addEventListener('click', () => {
+          likeButton.addEventListener('click', (e) => {
+            e.stopPropagation();
             const index = likeButton.dataset.index;
-    if (likeButton.classList.contains('-active-like')) {
-    commentsOfArr[index].like = Number(commentsOfArr[index].like) -1;
-    commentsOfArr[index].isActiveLike = false;
+    if (commentsOfArr[index].isActiveLike) {
+    commentsOfArr[index].like --;
     } else {
-      commentsOfArr[index].like = Number(commentsOfArr[index].like) +1;
-      commentsOfArr[index].isActiveLike = true;
-      }renderComments();
+      commentsOfArr[index].like ++;
+      }
+      commentsOfArr[index].isActiveLike = !commentsOfArr[index].isActiveLike;
+      renderComments();
     });
     }
     };
+
+    const commentEnd = () => {
+      const allComments = document.querySelectorAll('.comment');
+       for (const allComment of allComments) {
+        allComment.addEventListener('click', () => {
+          textInputElement.value = `> ${allComment.querySelector('.comment-text').innerHTML
+          .replaceAll("&amp;", "&")
+          .replaceAll("&lt;", "<")
+          .replaceAll("&gt;", ">")
+          .replaceAll("&quot;", '"')}`
+          + `\n\n${allComment.querySelector('.comment-header').children[0].innerHTML
+          .replaceAll("&amp;", "&")
+          .replaceAll("&lt;", "<")
+          .replaceAll("&gt;", ">")
+          .replaceAll("&quot;", '"')}`
+        })
+       }
+    }
 
     const renderComments = () => {
     const commentsHtml = commentsOfArr.map((item, index) =>{
@@ -89,9 +108,7 @@
             <div>${item.date}</div>
           </div>
           <div class="comment-body">
-            <div class="comment-text">
-              ${item.text}
-            </div>
+            <div class="comment-text">${item.text}</div>
           </div>
           <div class="comment-footer">
             <div class="likes">
@@ -104,6 +121,7 @@
     ).join('') ; 
     listElement.innerHTML = commentsHtml;
     likes();
+    commentEnd();
     }
   renderComments();
 
@@ -140,9 +158,17 @@
       date.getMinutes().toString().padStart(2, '0');
 
       commentsOfArr.push({  
-        name: nameInputElement.value,
+        name: nameInputElement.value
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;"),
         date: formattedDate,
-        text: textInputElement.value,
+        text: textInputElement.value
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;"),
         like: 0,
         isactivelike: false,
       })
@@ -155,9 +181,11 @@
 
     deleteButtonElement.addEventListener("click", () => { 
       const lastCommentIndex = listElement.innerHTML.lastIndexOf( '<li class="comment">' ); 
-        if (lastCommentIndex !== -1) { 
+        if (lastCommentIndex !== -1) {
           listElement.innerHTML = listElement.innerHTML.substring( 0, lastCommentIndex ); 
         } 
+        commentsOfArr.pop();
+        renderComments();
     });
     
     document.addEventListener("keyup", (event) => {
