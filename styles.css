@@ -151,3 +151,9 @@ body {
   .add-form-delete:hover {
     opacity: 0.9;
   }
+
+  .preline {
+    white-space: pre-line;
+   }
+
+ 

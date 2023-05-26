@@ -44,22 +44,53 @@
     const textInputElement = document.getElementById("text-input");
     const deleteButtonElement = document.getElementById("delete-button");
 
-    const commentsOfArr = [
-      {
-        name: 'Глеб Фокин',
-        date: '12.02.22 12:18',
-        text: 'Это будет первый комментарий на этой странице',
-        like: '3',
+    let commentsOfArr = [
+      // {
+      //   name: 'Глеб Фокин',
+      //   date: '12.02.22 12:18',
+      //   text: 'Это будет первый комментарий на этой странице',
+      //   like: '3',
+      //   isActiveLike: false,
+      // },
+      // {
+      //   name: 'Варвара Н.',
+      //   date: '13.02.22 19:22',
+      //   text: 'Мне нравится как оформлена эта страница! ❤',
+      //   like: '75',
+      //   isActiveLike: false,
+      // }
+    ];
+
+    const fetchPromise = fetch(
+    'https://wedev-api.sky.pro/api/v1/oleg-chernov/comments',
+    {
+      method: 'GET'
+    }
+  );
+
+  fetchPromise.then((response) => {
+    const jsonPromise = response.json();
+
+  jsonPromise.then((responseData) => {
+    const appComments = responseData.comments.map((comment) => {
+      const dateComment = new Date(comment.date)
+      return {
+        name: comment.author.name,
+        date: dateComment.getDate().toString().padStart(2, '0') + '.' +
+            (dateComment.getMonth() + 1).toString().padStart(2, '0') + '.' +
+            dateComment.getFullYear().toString().slice(-2) + ' ' +
+            dateComment.getHours().toString().padStart(2, '0') + ':' +
+            dateComment.getMinutes().toString().padStart(2, '0'),
+        text: comment.text,
+        like: comment.likes,
         isActiveLike: false,
-      },
-      {
-        name: 'Варвара Н.',
-        date: '13.02.22 19:22',
-        text: 'Мне нравится как оформлена эта страница! ❤',
-        like: '75',
-        isActiveLike: false,
-      }
-    ]
+        }
+      })
+
+      commentsOfArr = appComments;
+      renderComments();
+    })
+  });
 
     const likes = () => {
     const likeButtons = document.querySelectorAll('.like-button');
@@ -97,22 +128,22 @@
     }
 
     const renderComments = () => {
-    const commentsHtml = commentsOfArr.map((item, index) =>{
+    const commentsHtml = commentsOfArr.map((comment, index) =>{
     let activeLike = '';
      if (commentsOfArr[index].isActiveLike) {
         activeLike ='-active-like'
       } 
         return `<li class="comment">
           <div class="comment-header">
-            <div>${item.name}</div>
-            <div>${item.date}</div>
+            <div>${comment.name}</div>
+            <div>${comment.date}</div>
           </div>
           <div class="comment-body">
-            <div class="comment-text">${item.text}</div>
+            <div class="comment-text preline">${comment.text}</div>
           </div>
           <div class="comment-footer">
             <div class="likes">
-              <span class="likes-counter">${item.like}</span>
+              <span class="likes-counter">${comment.like}</span>
               <button class="like-button ${activeLike}" data-index='${index}'></button>
             </div>
           </div>
@@ -157,20 +188,62 @@
       date.getHours().toString().padStart(2, '0') + ':' +
       date.getMinutes().toString().padStart(2, '0');
 
-      commentsOfArr.push({  
-        name: nameInputElement.value
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;"),
-        date: formattedDate,
-        text: textInputElement.value
-          .replaceAll("&", "&amp;")
-          .replaceAll("<", "&lt;")
-          .replaceAll(">", "&gt;")
-          .replaceAll('"', "&quot;"),
-        like: 0,
-        isactivelike: false,
+    const sanitizeHtml = (htmlString) => {
+      return htmlString.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+    };      
+      // commentsOfArr.push({  
+      //   name: sanitizeHtml(nameInputElement.value),
+      //   date: formattedDate,
+      //   text: sanitizeHtml(textInputElement.value),
+      //   like: 0,
+      //   isactivelike: false,
+      // })
+
+    fetch(
+      'https://wedev-api.sky.pro/api/v1/oleg-chernov/comments',
+      {
+        method: 'POST',
+        body: JSON.stringify(
+          {
+            text: sanitizeHtml(textInputElement.value),
+            name: sanitizeHtml(nameInputElement.value),
+          }
+        )
+      }
+      ).then((response) => {
+        response.json().then((responseData) => {
+          commentsOfArr = responseData.commentsOfArr;
+        })
+        renderComments();
+    const fetchPromise = fetch(
+    'https://wedev-api.sky.pro/api/v1/oleg-chernov/comments',
+    {
+      method: 'GET'
+    }
+  );
+
+  fetchPromise.then((response) => {
+    const jsonPromise = response.json();
+
+    jsonPromise.then((responseData) => {
+      const appComments = responseData.comments.map((comment) => {
+        const dateComment = new Date(comment.date)
+        return {
+          name: comment.author.name,
+          date: dateComment.getDate().toString().padStart(2, '0') + '.' +
+                (dateComment.getMonth() + 1).toString().padStart(2, '0') + '.' +
+                dateComment.getFullYear().toString().slice(-2) + ' ' +
+                dateComment.getHours().toString().padStart(2, '0') + ':' +
+                dateComment.getMinutes().toString().padStart(2, '0'),
+          text: comment.text,
+          like: comment.likes,
+          isActiveLike: false,
+        }
+      })
+      commentsOfArr = appComments;
+      renderComments();
+    })
+    });
       })
       renderComments();
 
