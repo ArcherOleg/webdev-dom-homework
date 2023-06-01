@@ -10,7 +10,12 @@
     <div class="container">
       <ul id="list" class="comments">
       </ul>
-      <div class="add-form">
+      <div id="loadingCommentText">
+        <p class="loading-comments">
+          Ждите...Комментарии загружаются...
+        </p>
+      </div>
+      <div class="add-form" id="addForm">
         <input id="name-input"
           type="text"
           class="add-form-name"
@@ -27,6 +32,9 @@
           <buttton id="delete-button" class="add-form-delete">Удалить комментарий</buttton>
         </div>
       </div>
+      <div id="addComment">
+          <p>Ждите...</p>
+      </div>
     </div>
   </body>
 
@@ -38,11 +46,20 @@
 
   <script>
     "use strict";
+
+   // Получеаем доступ к разметке html в JS
+
     const buttonElement = document.getElementById("add-button");
     const listElement = document.getElementById("list");
     const nameInputElement = document.getElementById("name-input");  
     const textInputElement = document.getElementById("text-input");
-    const deleteButtonElement = document.getElementById("delete-button");
+    const loadingCommentElement = document.getElementById("loadingCommentText");
+    const addCommentElement = document.getElementById('addComment');
+    const addFormComment = document.getElementById('addForm');
+
+    addCommentElement.style.display = 'none';
+
+    //  Получаем данные из API(Сервера)
 
     let commentsOfArr = [
       // {
@@ -61,19 +78,18 @@
       // }
     ];
 
-    const fetchPromise = fetch(
+  const fetchPromise = () => {
+    return fetch(
     'https://wedev-api.sky.pro/api/v1/oleg-chernov/comments',
     {
       method: 'GET'
-    }
-  );
-
-  fetchPromise.then((response) => {
-    const jsonPromise = response.json();
-
-  jsonPromise.then((responseData) => {
-    const appComments = responseData.comments.map((comment) => {
-      const dateComment = new Date(comment.date)
+    })
+    .then((response) => {
+      return response.json()
+    })
+    .then((responseData) => {
+      const appComments = responseData.comments.map((comment) => {
+      const dateComment = new Date(comment.date);
       return {
         name: comment.author.name,
         date: dateComment.getDate().toString().padStart(2, '0') + '.' +
@@ -86,11 +102,98 @@
         isActiveLike: false,
         }
       })
-
       commentsOfArr = appComments;
       renderComments();
     })
-  });
+  };
+
+  // Добавляем обработчик клика на кнопку "Написать"
+
+  buttonElement.addEventListener("click", () => {
+      addCommentElement.style.display = 'block';
+      addFormComment.style.display = 'none';
+      nameInputElement.classList.remove("error");
+      textInputElement.classList.remove("error");
+        if (nameInputElement.value === "") {
+           nameInputElement.classList.add("error");
+          return;
+        };
+            if (textInputElement.value === "") {
+              textInputElement.classList.add("error");
+            return;
+          };
+// Добавляем дату нового комментария
+
+const date = new Date();
+      
+      const formattedDate =
+      date.getDate().toString().padStart(2, '0') + '.' +
+      (date.getMonth() + 1).toString().padStart(2, '0') + '.' +
+      date.getFullYear().toString().slice(-2) + ' ' +
+      date.getHours().toString().padStart(2, '0') + ':' +
+      date.getMinutes().toString().padStart(2, '0');
+
+ // Защищаем ввод данных
+
+    const sanitizeHtml = (htmlString) => {
+      return htmlString.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+    };  
+
+  // Добавляем новый комменрарий в API
+
+    return fetch(
+      'https://wedev-api.sky.pro/api/v1/oleg-chernov/comments',
+      {
+        method: 'POST',
+        body: JSON.stringify(
+          {
+            text: sanitizeHtml(textInputElement.value),
+            name: sanitizeHtml(nameInputElement.value),
+          })
+      })
+      .then((response) => {
+        return response.json()
+      }) 
+      .then((responseData) => {
+          commentsOfArr = responseData.commentsOfArr;
+          fetchPromise()
+      })
+    buttonElement.disabled = true;
+      });
+
+       // Отправка коммента с помощью кнопки Enter
+    document.addEventListener("keyup", (event) => {
+      if (event.key === "Enter") { 
+         buttonElement.click(); 
+        } 
+        });
+
+     // Активность кнопки "Написать"
+
+  buttonElement.disabled = true;
+    nameInputElement.addEventListener("input", () => {
+      if (nameInputElement.value.trim() !== "") {
+        buttonElement.disabled = false;
+      } else {
+        buttonElement.disabled = true; 
+      }
+    });
+
+   //Удаление последнего комментария
+
+   const deleteButtonElement = document.getElementById('delete-button');
+
+  deleteButtonElement.addEventListener("click", () => { 
+  const lastCommentIndex = listElement.innerHTML.lastIndexOf( '<li class="comment">' ); 
+    if (lastCommentIndex !== -1) {
+      listElement.innerHTML = listElement.innerHTML.substring( 0, lastCommentIndex ); 
+    } 
+    commentsOfArr.pop();
+    renderComments();
+});
+
+
+  // Добавляем фукцию активности лайка
 
     const likes = () => {
     const likeButtons = document.querySelectorAll('.like-button');
@@ -109,6 +212,8 @@
     }
     };
 
+     // Добавляю обработчик клика на комментарий 
+
     const commentEnd = () => {
       const allComments = document.querySelectorAll('.comment');
        for (const allComment of allComments) {
@@ -126,6 +231,8 @@
         })
        }
     }
+
+    // создаем рендер фукцию для добавления разметки html из JS
 
     const renderComments = () => {
     const commentsHtml = commentsOfArr.map((comment, index) =>{
@@ -150,123 +257,22 @@
         </li>`
       }
     ).join('') ; 
+
     listElement.innerHTML = commentsHtml;
+
+    loadingCommentElement.style.display = 'none';
+    nameInputElement.value = '';
+    textInputElement.value = '';
+    addCommentElement.style.display = 'none';
+    addFormComment.style.display = 'flex';
+   
+
     likes();
     commentEnd();
-    }
-  renderComments();
-
-  buttonElement.disabled = true;
-    nameInputElement.addEventListener("input", () => {
-      if (nameInputElement.value.trim() !== "") {
-        buttonElement.disabled = false;
-        return; 
-      } else {
-        buttonElement.disabled = true; 
-        return;
-      }
-    });
-
-    buttonElement.addEventListener("click", () => {
-      nameInputElement.classList.remove("error");
-        if (nameInputElement.value === "") {
-           nameInputElement.classList.add("error");
-          return;
-        };
-        textInputElement.classList.remove("error");
-            if (textInputElement.value === "" || textInputElement.value === "\n") {
-              textInputElement.classList.add("error");
-            return;
-          };
-
-      const date = new Date();
-      
-      const formattedDate =
-      date.getDate().toString().padStart(2, '0') + '.' +
-      (date.getMonth() + 1).toString().padStart(2, '0') + '.' +
-      date.getFullYear().toString().slice(-2) + ' ' +
-      date.getHours().toString().padStart(2, '0') + ':' +
-      date.getMinutes().toString().padStart(2, '0');
-
-    const sanitizeHtml = (htmlString) => {
-      return htmlString.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
-    };      
-      // commentsOfArr.push({  
-      //   name: sanitizeHtml(nameInputElement.value),
-      //   date: formattedDate,
-      //   text: sanitizeHtml(textInputElement.value),
-      //   like: 0,
-      //   isactivelike: false,
-      // })
-
-    fetch(
-      'https://wedev-api.sky.pro/api/v1/oleg-chernov/comments',
-      {
-        method: 'POST',
-        body: JSON.stringify(
-          {
-            text: sanitizeHtml(textInputElement.value),
-            name: sanitizeHtml(nameInputElement.value),
-          }
-        )
-      }
-      ).then((response) => {
-        response.json().then((responseData) => {
-          commentsOfArr = responseData.commentsOfArr;
-        })
-        renderComments();
-    const fetchPromise = fetch(
-    'https://wedev-api.sky.pro/api/v1/oleg-chernov/comments',
-    {
-      method: 'GET'
-    }
-  );
-
-  fetchPromise.then((response) => {
-    const jsonPromise = response.json();
-
-    jsonPromise.then((responseData) => {
-      const appComments = responseData.comments.map((comment) => {
-        const dateComment = new Date(comment.date)
-        return {
-          name: comment.author.name,
-          date: dateComment.getDate().toString().padStart(2, '0') + '.' +
-                (dateComment.getMonth() + 1).toString().padStart(2, '0') + '.' +
-                dateComment.getFullYear().toString().slice(-2) + ' ' +
-                dateComment.getHours().toString().padStart(2, '0') + ':' +
-                dateComment.getMinutes().toString().padStart(2, '0'),
-          text: comment.text,
-          like: comment.likes,
-          isActiveLike: false,
-        }
-      })
-      commentsOfArr = appComments;
-      renderComments();
-    })
-    });
-      })
-      renderComments();
-
-        nameInputElement.value = "";
-        textInputElement.value = "";
-        buttonElement.disabled = true;
-    })
-
-    deleteButtonElement.addEventListener("click", () => { 
-      const lastCommentIndex = listElement.innerHTML.lastIndexOf( '<li class="comment">' ); 
-        if (lastCommentIndex !== -1) {
-          listElement.innerHTML = listElement.innerHTML.substring( 0, lastCommentIndex ); 
-        } 
-        commentsOfArr.pop();
-        renderComments();
-    });
     
-    document.addEventListener("keyup", (event) => {
-      if (event.key === "Enter") { 
-         buttonElement.click(); 
-        } 
-        });
+    };
 
+    fetchPromise();
     console.log("It works!");
   </script>
 </html>
