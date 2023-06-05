@@ -77,6 +77,19 @@
       //   isActiveLike: false,
       // }
     ];
+    
+  // Добавляем дату нового комментария
+  const formatDate = (commentDate) => {
+  const date = new Date(commentDate);
+      
+      const formattedDate =
+      date.getDate().toString().padStart(2, '0') + '.' +
+      (date.getMonth() + 1).toString().padStart(2, '0') + '.' +
+      date.getFullYear().toString().slice(-2) + ' ' +
+      date.getHours().toString().padStart(2, '0') + ':' +
+      date.getMinutes().toString().padStart(2, '0');
+      return formattedDate;
+    }
 
   const fetchPromise = () => {
     return fetch(
@@ -89,14 +102,9 @@
     })
     .then((responseData) => {
       const appComments = responseData.comments.map((comment) => {
-      const dateComment = new Date(comment.date);
       return {
         name: comment.author.name,
-        date: dateComment.getDate().toString().padStart(2, '0') + '.' +
-            (dateComment.getMonth() + 1).toString().padStart(2, '0') + '.' +
-            dateComment.getFullYear().toString().slice(-2) + ' ' +
-            dateComment.getHours().toString().padStart(2, '0') + ':' +
-            dateComment.getMinutes().toString().padStart(2, '0'),
+        date: formatDate(comment.date),
         text: comment.text,
         like: comment.likes,
         isActiveLike: false,
@@ -112,27 +120,18 @@
   buttonElement.addEventListener("click", () => {
       addCommentElement.style.display = 'block';
       addFormComment.style.display = 'none';
-      nameInputElement.classList.remove("error");
-      textInputElement.classList.remove("error");
-        if (nameInputElement.value === "") {
-           nameInputElement.classList.add("error");
-          return;
-        };
-            if (textInputElement.value === "") {
-              textInputElement.classList.add("error");
-            return;
-          };
-// Добавляем дату нового комментария
+      // nameInputElement.classList.remove("error");
+      // textInputElement.classList.remove("error");
+      //   if (nameInputElement.value === "") {
+      //      nameInputElement.classList.add("error");
+      //     return;
+      //   };
+      //       if (textInputElement.value === "") {
+      //         textInputElement.classList.add("error");
+      //       return;
+      //     };
 
-const date = new Date();
-      
-      const formattedDate =
-      date.getDate().toString().padStart(2, '0') + '.' +
-      (date.getMonth() + 1).toString().padStart(2, '0') + '.' +
-      date.getFullYear().toString().slice(-2) + ' ' +
-      date.getHours().toString().padStart(2, '0') + ':' +
-      date.getMinutes().toString().padStart(2, '0');
-
+const postComment = () => {
  // Защищаем ввод данных
 
     const sanitizeHtml = (htmlString) => {
@@ -149,16 +148,40 @@ const date = new Date();
           {
             text: sanitizeHtml(textInputElement.value),
             name: sanitizeHtml(nameInputElement.value),
+            forceError:true,
           })
       })
       .then((response) => {
-        return response.json()
+        if(response.status === 201){
+          nameInputElement.classList.remove("error");
+          textInputElement.classList.remove("error");
+          return response.json()
+        } if (response.status === 400){
+          throw new Error("Плохой запрос");
+        } else {
+          throw new Error("Сервер не отвечает");
+        }
       }) 
       .then((responseData) => {
           commentsOfArr = responseData.commentsOfArr;
+          nameInputElement.value = '';
+          textInputElement.value = '';
+          buttonElement.disabled = true;
           fetchPromise()
       })
-    buttonElement.disabled = true;
+      .catch((error) => {
+        addCommentElement.style.display = 'none';
+        addFormComment.style.display = 'flex';
+        if (error.message === "Плохой запрос"){
+          nameInputElement.classList.remove("error");
+          textInputElement.classList.remove("error");
+          alert("Вы ввели слишком короткое имя или комментарий")
+        } if (error.message === "Сервер не отвечает"){
+          postComment()
+        }
+      }) 
+      }
+      postComment()
       });
 
        // Отправка коммента с помощью кнопки Enter
