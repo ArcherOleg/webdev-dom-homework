@@ -119,7 +119,7 @@ body {
 
   .add-form-row {
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between;;
   }
 
   .add-form-button {
@@ -137,13 +137,12 @@ body {
   }
 
   .add-form-delete{
-    margin-top:40px;
-    margin-bottom: 18px;
-    font-size: 20px;
+    margin-top: 24px;
+    font-size: 24px;
     padding: 10px 20px;
     background-color: #bcec30;
     border: none;
-    border-radius: 12px;
+    border-radius: 18px;
     cursor: pointer;
     color: black;
   }
@@ -152,8 +151,33 @@ body {
     opacity: 0.9;
   }
 
-  .preline {
+  .preline{
     white-space: pre-line;
-   }
+  }
 
+  .disnone {
+    display: none;
+  }
+
+  .add-form-button_disable {
+    background-color: #4b4c4c;
+  }
+ 
+  .text-atoriz{
+    color: #ffffff;
+  }
+
+  .text_Reg {
+    font-size: 24px;
+    color: #ffffff;
+    text-align: center;
+  }
+
+  .add-form-register {
+    font-size: 16px;
+    font-family: Helvetica;
+    border-radius: 8px;
+    border: none;
+    padding: 11px 22px;
+  }
  
